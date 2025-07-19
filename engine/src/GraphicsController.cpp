@@ -93,7 +93,7 @@ void GraphicsController::draw_skybox(const resources::Shader *shader, const reso
 }
 
 void GraphicsController::draw_instancing(const resources::Shader *shader, const resources::Instancing *instancing) {
-    glm::mat4 view = glm::mat4(glm::mat3(m_camera.view_matrix()));
+    glm::mat4 view = m_camera.view_matrix();
     shader->use();
     shader->set_mat4("view", view);
     shader->set_mat4("projection", projection_matrix<>());
