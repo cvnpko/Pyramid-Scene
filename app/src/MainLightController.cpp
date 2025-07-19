@@ -9,6 +9,7 @@ void MainLightController::setLight(engine::resources::Shader *shader) {
     auto graphics = engine::core::Controller::get<engine::graphics::GraphicsController>();
     auto main_event_controller = engine::core::Controller::get<app::MainEventController>();
 
+    shader->use();
     shader->set_vec3("pointLightSun.position", glm::vec3(glm::rotate(glm::mat4(1.0f), glm::radians(angle),
                                                                      glm::vec3(1.0f, 0.0f, 0.0f)) * glm::vec4(m_point_light_sun.position, 1.0)));
     shader->set_vec3("pointLightSun.ambient", m_point_light_sun.ambient);
