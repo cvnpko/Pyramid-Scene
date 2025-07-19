@@ -35,6 +35,7 @@ void MainController::draw() {
     draw_pyramids();
     draw_sphinx();
     draw_camels();
+    draw_instancing();
     draw_skybox();
 }
 
@@ -142,14 +143,23 @@ void MainController::draw_skybox() {
     engine::core::Controller::get<engine::graphics::GraphicsController>()->draw_skybox(shader, skybox_cube);
 }
 
+void MainController::draw_instancing() {
+    auto shader = engine::core::Controller::get<engine::resources::ResourcesController>()->shader("instancing");
+    auto light_controller = engine::core::Controller::get<app::MainLightController>();
+    auto instancing_model = engine::core::Controller::get<engine::resources::ResourcesController>()->instancing("locust");
+    shader->use();
+    light_controller->setLight(shader);
+    engine::core::Controller::get<engine::graphics::GraphicsController>()->draw_instancing(shader, instancing_model);
+}
+
 void MainController::update_camera() {
     auto platform = engine::core::Controller::get<engine::platform::PlatformController>();
     auto camera = engine::core::Controller::get<engine::graphics::GraphicsController>()->camera();
     float dt = platform->dt();
-    if (platform->key(engine::platform::KEY_W).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::FORWARD, 6 * dt); }
-    if (platform->key(engine::platform::KEY_S).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::BACKWARD, 6 * dt); }
-    if (platform->key(engine::platform::KEY_A).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::LEFT, 6 * dt); }
-    if (platform->key(engine::platform::KEY_D).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::RIGHT, 6 * dt); }
+    if (platform->key(engine::platform::KEY_W).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::FORWARD, 60 * dt); }
+    if (platform->key(engine::platform::KEY_S).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::BACKWARD, 60 * dt); }
+    if (platform->key(engine::platform::KEY_A).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::LEFT, 60 * dt); }
+    if (platform->key(engine::platform::KEY_D).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::RIGHT, 60 * dt); }
     auto mouse = platform->mouse();
     camera->rotate_camera(mouse.dx, mouse.dy);
     camera->zoom(mouse.scroll);

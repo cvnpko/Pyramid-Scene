@@ -29,6 +29,8 @@ private:
 
     void draw_skybox();
 
+    void draw_instancing();
+
     void draw_dunes();
 
     void draw_pyramids();
