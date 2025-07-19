@@ -11,6 +11,7 @@
 #include <engine/resources/Texture.hpp>
 #include <engine/resources/Shader.hpp>
 #include <engine/resources/Skybox.hpp>
+#include <engine/resources/Instancing.hpp>
 #include <unordered_map>
 
 namespace engine::resources {
@@ -20,9 +21,7 @@ namespace engine::resources {
 */
 class ResourcesController final : public core::Controller {
 public:
-    std::string_view name() const override {
-        return "ResourcesController";
-    }
+    std::string_view name() const override { return "ResourcesController"; }
 
     /**
     * @brief Retrieves the model with a given name. You are not supposed to call `delete` on this pointer.
@@ -69,6 +68,8 @@ public:
     */
     Shader *shader(const std::string &name, const std::filesystem::path &path = "");
 
+    Instancing *instancing(const std::string &name);
+
 private:
     /**
     * @brief Loads all the resources from the "resources/" directory.
@@ -95,6 +96,8 @@ private:
     */
     void load_shaders();
 
+    void load_instancing();
+
     /**
     * @brief A hashmap of all the loaded @ref Model.
     */
@@ -111,12 +114,13 @@ private:
     * @brief A hashmap of all the loaded @ref Shader.
     */
     std::unordered_map<std::string, std::unique_ptr<Shader> > m_shaders;
+    std::unordered_map<std::string, std::unique_ptr<Instancing> > m_instancing;
 
     const std::filesystem::path m_models_path = "resources/models";
     const std::filesystem::path m_textures_path = "resources/textures";
     const std::filesystem::path m_shaders_path = "resources/shaders";
     const std::filesystem::path m_skyboxes_path = "resources/skyboxes";
 };
-} // namespace engine
+}// namespace engine
 
 #endif//MATF_RG_PROJECT_RESOURCES_CONTROLLER_HPP

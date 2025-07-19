@@ -91,4 +91,27 @@ void GraphicsController::draw_skybox(const resources::Shader *shader, const reso
     CHECKED_GL_CALL(glDepthFunc, GL_LESS);// set depth function back to default
     CHECKED_GL_CALL(glBindTexture, GL_TEXTURE_CUBE_MAP, 0);
 }
+
+void GraphicsController::draw_instancing(const resources::Shader *shader, const resources::Instancing *instancing) {
+    glm::mat4 view = glm::mat4(glm::mat3(m_camera.view_matrix()));
+    shader->use();
+    shader->set_mat4("view", view);
+    shader->set_mat4("projection", projection_matrix<>());
+    shader->set_int("texture_diffuse1", 0);
+    if (instancing->get_model().meshes()[0].m_textures.size() > 0) {
+        CHECKED_GL_CALL(glActiveTexture, GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, instancing->get_model().meshes()[0].m_textures[0]->id());
+    }
+    for (unsigned int i = 0; i < instancing->get_model().meshes().size(); i++) {
+        CHECKED_GL_CALL(glBindVertexArray, instancing->get_model().meshes()[i].m_vao);
+        glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(instancing->get_model().meshes()[i].m_num_indices), GL_UNSIGNED_INT, 0, instancing->get_amount());
+        CHECKED_GL_CALL(glBindVertexArray, 0);
+    }
+
+    for (unsigned int i = 0; i < instancing->get_amount(); i++) {
+        shader->set_mat4("model", instancing->get_model_matrix(i));
+        instancing->get_model().draw(shader);
+    }
+}
+
 }

@@ -4,11 +4,18 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <engine/graphics/OpenGL.hpp>
+#include <engine/platform/PlatformController.hpp>
+#include <engine/resources/Instancing.hpp>
 #include <engine/resources/ResourcesController.hpp>
 #include <engine/resources/ShaderCompiler.hpp>
 #include <engine/util/Configuration.hpp>
 #include <engine/util/Errors.hpp>
 #include <spdlog/spdlog.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include<engine/graphics/OpenGL.hpp>
+#include <glad/glad.h>
 
 namespace engine::resources {
 
@@ -17,6 +24,7 @@ void ResourcesController::initialize() {
     load_models();
     load_textures();
     load_skyboxes();
+    load_instancing();
 }
 
 void ResourcesController::load_shaders() {
@@ -42,9 +50,7 @@ void ResourcesController::load_models() {
         throw util::EngineError(util::EngineError::Type::ConfigurationError,
                                 "No configuration for models in the config.json, please provide the resources config. See the example in the README.md");
     }
-    for (const auto &model_entry: config["resources"]["models"].items()) {
-        model(model_entry.key());
-    }
+    for (const auto &model_entry: config["resources"]["models"].items()) { model(model_entry.key()); }
 }
 
 void ResourcesController::load_textures() {
@@ -71,6 +77,15 @@ void ResourcesController::load_skyboxes() {
     }
 }
 
+void ResourcesController::load_instancing() {
+    const auto &config = util::Configuration::config();
+    if (!config.contains("resources") || !config["resources"].contains("instancing")) {
+        throw util::EngineError(util::EngineError::Type::ConfigurationError,
+                                "No configuration for instancing in the config.json, please provide the resources config. See the example in the README.md");
+    }
+    for (const auto &instancing_entry: config["resources"]["instancing"].items()) { instancing(instancing_entry.key()); }
+}
+
 /**
  * @class AssimpSceneProcessor
  * @brief Processes the meshes in an Assimp scene.
@@ -84,9 +99,9 @@ public:
     std::vector<Mesh> process_meshes();
 
     explicit AssimpSceneProcessor(ResourcesController *resources_controller, const aiScene *scene,
-                                  std::filesystem::path model_path) :
-            m_scene(scene), m_model_path(std::move(model_path)), m_resources_controller(resources_controller) {
-    }
+                                  std::filesystem::path model_path) : m_scene(scene)
+                                                                  , m_model_path(std::move(model_path))
+                                                                  , m_resources_controller(resources_controller) {}
 
 private:
     void process_node(const aiNode *node);
@@ -112,19 +127,17 @@ Model *ResourcesController::model(
         auto &config = util::Configuration::config();
         if (!config["resources"]["models"].contains(name)) {
             throw util::EngineError(util::EngineError::Type::ConfigurationError, std::format(
-                    "No model ({}) specify in config.json. Please add the model to the config.json.",
-                    name));
+                                            "No model ({}) specify in config.json. Please add the model to the config.json.",
+                                            name));
         }
         std::filesystem::path model_path = m_models_path /
                                            std::filesystem::path(
                                                    config["resources"]["models"][name]["path"].get<
-                                                           std::string>());
+                                                       std::string>());
         Assimp::Importer importer;
         int flags = aiProcess_Triangulate | aiProcess_GenSmoothNormals |
                     aiProcess_CalcTangentSpace;
-        if (config["resources"]["models"][name].value<bool>("flip_uvs", false)) {
-            flags |= aiProcess_FlipUVs;
-        }
+        if (config["resources"]["models"][name].value<bool>("flip_uvs", false)) { flags |= aiProcess_FlipUVs; }
 
         spdlog::info("load_model(name={}, path={})", name, model_path.string());
         const aiScene *scene =
@@ -168,6 +181,74 @@ Skybox *ResourcesController::skybox(const std::string &name,
     return result.get();
 }
 
+Instancing *ResourcesController::instancing(const std::string &name) {
+    auto &result = m_instancing[name];
+    auto platform = engine::core::Controller::get<engine::platform::PlatformController>();
+    if (!result) {
+        auto &config = util::Configuration::config();
+        if (!config["resources"]["instancing"].contains(name)) {
+            throw util::EngineError(util::EngineError::Type::ConfigurationError, std::format(
+                                            "No instancing ({}) specify in config.json. Please add the instancing to the config.json.",
+                                            name));
+        }
+        uint32_t amount = config["resources"]["instancing"][name]["amount"].get<uint32_t>();
+        std::string model_name = name;
+        std::vector<glm::mat4> model_matrices(amount);
+        srand(static_cast<unsigned int>(platform->current()));
+        float radius = 150.0;
+        float offset = 25.0f;
+        for (unsigned int i = 0; i < amount; i++) {
+            glm::mat4 model = glm::mat4(1.0f);
+            float angle = (float) i / (float) amount * 360.0f;
+            float displacement = (rand() % (int) (2 * offset)) / 100.0f - offset;
+            float x = sin(angle) * radius + displacement;
+            displacement = (rand() % (int) (2 * offset * 100)) / 100.0f - offset;
+            float y = displacement * 0.4f;
+            displacement = (rand() % (int) (2 * offset * 100)) / 100.0f - offset;
+            float z = cos(angle) * radius + displacement;
+            model = glm::translate(model, glm::vec3(x, y, z));
+
+            float scale = static_cast<float>((rand() % 20) + 0.05);
+            model = glm::scale(model, glm::vec3(scale));
+
+            float rotAngle = static_cast<float>((rand() % 360));
+            model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
+
+            model_matrices[i] = model;
+        }
+
+        unsigned int buffer;
+        CHECKED_GL_CALL(glGenBuffers, 1, &buffer);
+        CHECKED_GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, buffer);
+        CHECKED_GL_CALL(glBufferData, GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &model_matrices[0], GL_STATIC_DRAW);
+
+        unsigned int size_meshes = m_models[model_name]->meshes().size();
+        for (unsigned int i = 0; i < size_meshes; i++) {
+            unsigned int VAO = m_models[model_name]->meshes()[i].m_vao;
+            CHECKED_GL_CALL(glBindVertexArray, VAO);
+            CHECKED_GL_CALL(glEnableVertexAttribArray, 3);
+            CHECKED_GL_CALL(glVertexAttribPointer, 3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *) 0);
+            CHECKED_GL_CALL(glEnableVertexAttribArray, 4);
+            CHECKED_GL_CALL(glVertexAttribPointer, 4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *) (sizeof(glm::vec4)));
+            CHECKED_GL_CALL(glEnableVertexAttribArray, 5);
+            CHECKED_GL_CALL(glVertexAttribPointer, 5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *) (2 * sizeof(glm::vec4)));
+            CHECKED_GL_CALL(glEnableVertexAttribArray, 6);
+            CHECKED_GL_CALL(glVertexAttribPointer, 6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *) (3 * sizeof(glm::vec4)));
+
+            CHECKED_GL_CALL(glVertexAttribDivisor, 3, 1);
+            CHECKED_GL_CALL(glVertexAttribDivisor, 4, 1);
+            CHECKED_GL_CALL(glVertexAttribDivisor, 5, 1);
+            CHECKED_GL_CALL(glVertexAttribDivisor, 6, 1);
+
+            CHECKED_GL_CALL(glBindVertexArray, 0);
+        }
+
+        spdlog::info("load_instancing(name={})", name);
+        result = std::make_unique<Instancing>(Instancing(model_matrices, *m_models[model_name], amount));
+    }
+    return result.get();
+}
+
 Shader *ResourcesController::shader(const std::string &name, const std::filesystem::path &path) {
     auto &result = m_shaders[name];
     if (!result) {
@@ -188,9 +269,7 @@ void AssimpSceneProcessor::process_node(const aiNode *node) {
         auto mesh = m_scene->mMeshes[node->mMeshes[i]];
         process_mesh(mesh);
     }
-    for (uint32_t i = 0; i < node->mNumChildren; ++i) {
-        process_node(node->mChildren[i]);
-    }
+    for (uint32_t i = 0; i < node->mNumChildren; ++i) { process_node(node->mChildren[i]); }
 }
 
 void AssimpSceneProcessor::process_mesh(aiMesh *mesh) {
@@ -241,9 +320,7 @@ void AssimpSceneProcessor::process_mesh(aiMesh *mesh) {
     for (uint32_t i = 0; i < mesh->mNumFaces; ++i) {
         aiFace face = mesh->mFaces[i];
 
-        for (uint32_t j = 0; j < face.mNumIndices; ++j) {
-            indices.push_back(face.mIndices[j]);
-        }
+        for (uint32_t j = 0; j < face.mNumIndices; ++j) { indices.push_back(face.mIndices[j]); }
     }
 
     auto material = m_scene->mMaterials[mesh->mMaterialIndex];
@@ -260,9 +337,7 @@ std::vector<Texture *> AssimpSceneProcessor::process_materials(const aiMaterial 
             aiTextureType_HEIGHT,
     };
 
-    for (auto ai_texture_type: ai_texture_types) {
-        process_material_type(textures, material, ai_texture_type);
-    }
+    for (auto ai_texture_type: ai_texture_types) { process_material_type(textures, material, ai_texture_type); }
     return textures;
 }
 
@@ -290,4 +365,4 @@ TextureType AssimpSceneProcessor::assimp_texture_type_to_engine(aiTextureType ty
     }
 }
 
-} // namespace engine
+}// namespace engine
