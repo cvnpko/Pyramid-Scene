@@ -14,7 +14,7 @@ class Instancing {
 public:
     void destroy();
 
-    Model get_model() const { return m_model; }
+    Model *get_model() const { return m_model; }
 
     glm::mat4 get_model_matrix(int i) const { return m_model_matrices[i]; }
 
@@ -22,12 +22,12 @@ public:
 
 private:
     uint32_t m_amount;
-    Model m_model;
+    Model *m_model;
     std::vector<glm::mat4> m_model_matrices;
 
     Instancing() = default;
 
-    Instancing(std::vector<glm::mat4> &model_matrices, Model &model, uint32_t amount) : m_model_matrices(std::move(model_matrices))
+    Instancing(std::vector<glm::mat4> &model_matrices, Model *model, uint32_t amount) : m_model_matrices(std::move(model_matrices))
                                                                                     , m_model(std::move(model))
                                                                                     , m_amount(std::move(amount)) {}
 };

@@ -208,7 +208,7 @@ Instancing *ResourcesController::instancing(const std::string &name) {
             float z = cos(angle) * radius + displacement;
             model = glm::translate(model, glm::vec3(x, y, z));
 
-            float scale = static_cast<float>((rand() % 20) + 0.05);
+            float scale = static_cast<float>((rand() % 20) / 10.00 + 0.05);
             model = glm::scale(model, glm::vec3(scale));
 
             float rotAngle = static_cast<float>((rand() % 360));
@@ -244,7 +244,7 @@ Instancing *ResourcesController::instancing(const std::string &name) {
         }
 
         spdlog::info("load_instancing(name={})", name);
-        result = std::make_unique<Instancing>(Instancing(model_matrices, *m_models[model_name], amount));
+        result = std::make_unique<Instancing>(Instancing(model_matrices, &(*(m_models[model_name])), amount));
     }
     return result.get();
 }

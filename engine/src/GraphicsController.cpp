@@ -98,19 +98,21 @@ void GraphicsController::draw_instancing(const resources::Shader *shader, const 
     shader->set_mat4("view", view);
     shader->set_mat4("projection", projection_matrix<>());
     shader->set_int("texture_diffuse1", 0);
-    if (instancing->get_model().meshes()[0].m_textures.size() > 0) {
+    int amount = instancing->get_amount();
+    auto model = instancing->get_model();
+    if (model->meshes()[0].m_textures.size() > 0) {
         CHECKED_GL_CALL(glActiveTexture, GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, instancing->get_model().meshes()[0].m_textures[0]->id());
+        glBindTexture(GL_TEXTURE_2D, model->meshes()[0].m_textures[0]->id());
     }
-    for (unsigned int i = 0; i < instancing->get_model().meshes().size(); i++) {
-        CHECKED_GL_CALL(glBindVertexArray, instancing->get_model().meshes()[i].m_vao);
-        glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(instancing->get_model().meshes()[i].m_num_indices), GL_UNSIGNED_INT, 0, instancing->get_amount());
+    for (unsigned int i = 0; i < model->meshes().size(); i++) {
+        CHECKED_GL_CALL(glBindVertexArray, model->meshes()[i].m_vao);
+        glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(model->meshes()[i].m_num_indices), GL_UNSIGNED_INT, 0, amount);
         CHECKED_GL_CALL(glBindVertexArray, 0);
     }
 
-    for (unsigned int i = 0; i < instancing->get_amount(); i++) {
+    for (unsigned int i = 0; i < amount; i++) {
         shader->set_mat4("model", instancing->get_model_matrix(i));
-        instancing->get_model().draw(shader);
+        model->draw(shader);
     }
 }
 
