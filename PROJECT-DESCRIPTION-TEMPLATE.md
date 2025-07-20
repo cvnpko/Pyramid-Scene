@@ -21,7 +21,7 @@ CHANGE_SKYBOX
 ### Group A:
 
 [ ] Frame-buffers with post-processing   
-[ ] Instancing  
+[x] Instancing  
 [ ] Off-screen Anti-Aliasing  
 [ ] Parallax Mapping
 
@@ -44,6 +44,7 @@ https://sketchfab.com/3d-models/dune-arrakis-wip-58bd8be249944f1b892a52eb52e0602
 https://sketchfab.com/3d-models/luna-082720dd94e94544b8df526966e60735  
 https://sketchfab.com/3d-models/the-sun-0d28aa65eb174d948c2716d73e8fd3bd
 https://sketchfab.com/3d-models/pyramid-2e0a99016e5a4ac5a9b56caf6a802b06
+https://sketchfab.com/3d-models/flying-crow-blacksmiths-workshop-assets-3ecfc0834b5b4883b840d0426c267efe
 
 ## Textures:
 
