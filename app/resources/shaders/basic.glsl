@@ -16,17 +16,18 @@ uniform mat4 projection;
 void main()
 {
     FragPos = vec3(model * vec4(aPos, 1.0));
-    Normal = mat3(transpose(inverse(model))) * aNormal;
+    Normal = transpose(inverse(mat3(model))) * aNormal;
     TexCoords = aTexCoords;
-    gl_Position = projection * view * vec4(FragPos, 1.0);
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
 }
 
 //#shader fragment
 #version 330 core
+layout (location = 0) out vec4 FragColor;
+layout (location = 1) out vec4 BrightColor;
 
 in vec3 Normal;
 in vec3 FragPos;
-out vec4 FragColor;
 
 in vec2 TexCoords;
 
@@ -74,6 +75,11 @@ void main() {
     vec3 result = CalcPointLight(pointLightMoon, normal, FragPos, viewDir);
     result += CalcPointLight(pointLightSun, normal, FragPos, viewDir);
     result += CalcSpotLight(spotLight, normal, FragPos, viewDir);
+    float brightness = dot(result, vec3(0.2126, 0.7152, 0.0722));
+    if (brightness > 1.0)
+    BrightColor = vec4(result, 1.0);
+    else
+    BrightColor = vec4(0.0, 0.0, 0.0, 1.0);
     FragColor = vec4(result, 1.0);
 }
 
