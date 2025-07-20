@@ -179,7 +179,7 @@ void MainController::draw_bloom() {
     auto shader_final = engine::core::Controller::get<engine::resources::ResourcesController>()->shader("bloom_final");
     auto main_event_controller = engine::core::Controller::get<app::MainEventController>();
     auto bloom = engine::core::Controller::get<engine::resources::ResourcesController>()->bloom();
-    engine::core::Controller::get<engine::graphics::GraphicsController>()->draw_bloom(shader_blur, shader_final, bloom, main_event_controller->is_day() ? 2.0f : 0.3f);
+    engine::core::Controller::get<engine::graphics::GraphicsController>()->draw_bloom(shader_blur, shader_final, bloom, main_event_controller->is_day() ? 1.2f : 1.8f);
 }
 
 void MainController::update_camera() {

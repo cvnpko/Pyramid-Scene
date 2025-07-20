@@ -23,5 +23,7 @@ void Bloom::activate_pingpong_FBO(bool horizontal) const {
 
 uint32_t Bloom::get_quadVAO() const { return m_quadVAO; }
 
+uint32_t Bloom::get_rboDepth() const { return m_rboDepth; }
+
 void Bloom::set_quadVAO(uint32_t quadVAO) { m_quadVAO = quadVAO; }
 }

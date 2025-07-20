@@ -323,7 +323,7 @@ Bloom *ResourcesController::bloom() {
         }
 
         spdlog::info("load_bloom");
-        result = std::make_unique<Bloom>(Bloom(pingpongFBO, pingpongColorbuffers, colorBuffers, hdrFBO));
+        result = std::make_unique<Bloom>(Bloom(pingpongFBO, pingpongColorbuffers, colorBuffers, hdrFBO, rboDepth));
     }
     return result.get();
 }
