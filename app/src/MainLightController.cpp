@@ -46,16 +46,16 @@ void MainLightController::initialize() {
     m_point_light_sun.diffuse = m_sun_light * m_sun_light_coeff;
     m_point_light_sun.specular = m_sun_light * m_sun_light_coeff;
     m_point_light_sun.constant = 1.0f;
-    m_point_light_sun.linear = 0.0009f;
-    m_point_light_sun.quadratic = 0.0000004f;
+    m_point_light_sun.linear = 0.009f;
+    m_point_light_sun.quadratic = 0.00004f;
 
     m_point_light_moon.position = glm::vec3(0.0f, -300.0f, 0.0f);
     m_point_light_moon.ambient = m_moon_light * m_moon_light_coeff * m_ambient_coeff;
     m_point_light_moon.diffuse = m_moon_light * m_moon_light_coeff;
     m_point_light_moon.specular = m_moon_light * m_moon_light_coeff;
     m_point_light_moon.constant = 1.0f;
-    m_point_light_moon.linear = 0.0009f;
-    m_point_light_moon.quadratic = 0.0000004f;
+    m_point_light_moon.linear = 0.009f;
+    m_point_light_moon.quadratic = 0.00004f;
 }
 
 bool MainLightController::loop() { return true; }

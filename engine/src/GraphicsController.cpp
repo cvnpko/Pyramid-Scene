@@ -146,7 +146,7 @@ void render_quad(resources::Bloom *bloom) {
 
 void GraphicsController::draw_bloom(const resources::Shader *shader_blur, const resources::Shader *shader_final, resources::Bloom *bloom, float exposure) {
     bool horizontal = true, first_iteration = true;
-    unsigned int amount = 10;
+    unsigned int amount = 5;
     shader_blur->use();
     for (unsigned int i = 0; i < amount; i++) {
         bloom->activate_pingpong_FBO(horizontal);
