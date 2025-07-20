@@ -25,6 +25,7 @@ void ResourcesController::initialize() {
     load_textures();
     load_skyboxes();
     load_instancing();
+    load_bloom();
 }
 
 void ResourcesController::load_shaders() {
@@ -85,6 +86,8 @@ void ResourcesController::load_instancing() {
     }
     for (const auto &instancing_entry: config["resources"]["instancing"].items()) { instancing(instancing_entry.key()); }
 }
+
+void ResourcesController::load_bloom() { bloom(); }
 
 /**
  * @class AssimpSceneProcessor
@@ -183,8 +186,8 @@ Skybox *ResourcesController::skybox(const std::string &name,
 
 Instancing *ResourcesController::instancing(const std::string &name) {
     auto &result = m_instancing[name];
-    auto platform = engine::core::Controller::get<engine::platform::PlatformController>();
     if (!result) {
+        auto platform = engine::core::Controller::get<engine::platform::PlatformController>();
         auto &config = util::Configuration::config();
         if (!config["resources"]["instancing"].contains(name)) {
             throw util::EngineError(util::EngineError::Type::ConfigurationError, std::format(
@@ -269,6 +272,58 @@ Shader *ResourcesController::shader(const std::string &name, const std::filesyst
     if (!result) {
         spdlog::info("load_shader(path={})", path.string());
         result = std::make_unique<Shader>(ShaderCompiler::compile_from_file(name, path));
+    }
+    return result.get();
+}
+
+Bloom *ResourcesController::bloom() {
+    auto &result = m_blooms["bloom"];
+    if (!result) {
+        auto platform = engine::core::Controller::get<engine::platform::PlatformController>();
+        unsigned int hdrFBO;
+        CHECKED_GL_CALL(glGenFramebuffers, 1, &hdrFBO);
+        CHECKED_GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, hdrFBO);
+
+        unsigned int colorBuffers[2];
+        CHECKED_GL_CALL(glGenTextures, 2, colorBuffers);
+        for (unsigned int i = 0; i < 2; i++) {
+            CHECKED_GL_CALL(glBindTexture, GL_TEXTURE_2D, colorBuffers[i]);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, platform->window()->width(), platform->window()->height(), 0, GL_RGBA, GL_FLOAT, NULL);
+            CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            CHECKED_GL_CALL(glFramebufferTexture2D, GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, colorBuffers[i], 0);
+        }
+        unsigned int rboDepth;
+        CHECKED_GL_CALL(glGenRenderbuffers, 1, &rboDepth);
+        CHECKED_GL_CALL(glBindRenderbuffer, GL_RENDERBUFFER, rboDepth);
+        CHECKED_GL_CALL(glRenderbufferStorage, GL_RENDERBUFFER, GL_DEPTH_COMPONENT, platform->window()->width(), platform->window()->height());
+        CHECKED_GL_CALL(glFramebufferRenderbuffer, GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+
+        unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+        glDrawBuffers(2, attachments);
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) { spdlog::info("Framebuffer not complete!"); }
+        CHECKED_GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, 0);
+
+        unsigned int pingpongFBO[2];
+        unsigned int pingpongColorbuffers[2];
+        CHECKED_GL_CALL(glGenFramebuffers, 2, pingpongFBO);
+        CHECKED_GL_CALL(glGenTextures, 2, pingpongColorbuffers);
+        for (unsigned int i = 0; i < 2; i++) {
+            CHECKED_GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, pingpongFBO[i]);
+            CHECKED_GL_CALL(glBindTexture, GL_TEXTURE_2D, pingpongColorbuffers[i]);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, platform->window()->width(), platform->window()->height(), 0, GL_RGBA, GL_FLOAT, NULL);
+            CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            CHECKED_GL_CALL(glFramebufferTexture2D, GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongColorbuffers[i], 0);
+            if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) { spdlog::info("Framebuffer not complete!"); }
+        }
+
+        spdlog::info("load_bloom");
+        result = std::make_unique<Bloom>(Bloom(pingpongFBO, pingpongColorbuffers, colorBuffers, hdrFBO));
     }
     return result.get();
 }

@@ -13,6 +13,7 @@
 #include <engine/resources/Skybox.hpp>
 #include <engine/resources/Instancing.hpp>
 #include <unordered_map>
+#include <engine/resources/Bloom.hpp>
 
 namespace engine::resources {
 /**
@@ -68,6 +69,8 @@ public:
     */
     Shader *shader(const std::string &name, const std::filesystem::path &path = "");
 
+    Bloom *bloom();
+
     Instancing *instancing(const std::string &name);
 
 private:
@@ -98,6 +101,8 @@ private:
 
     void load_instancing();
 
+    void load_bloom();
+
     /**
     * @brief A hashmap of all the loaded @ref Model.
     */
@@ -115,6 +120,7 @@ private:
     */
     std::unordered_map<std::string, std::unique_ptr<Shader> > m_shaders;
     std::unordered_map<std::string, std::unique_ptr<Instancing> > m_instancing;
+    std::unordered_map<std::string, std::unique_ptr<Bloom> > m_blooms;
 
     const std::filesystem::path m_models_path = "resources/models";
     const std::filesystem::path m_textures_path = "resources/textures";

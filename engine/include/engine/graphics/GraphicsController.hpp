@@ -9,6 +9,7 @@
 #include <engine/graphics/Camera.hpp>
 #include <engine/core/Controller.hpp>
 #include <engine/platform/PlatformEventObserver.hpp>
+#include <engine/resources/Bloom.hpp>
 #include <engine/resources/Instancing.hpp>
 
 struct ImGuiContext;
@@ -90,6 +91,9 @@ public:
     void draw_skybox(const resources::Shader *shader, const resources::Skybox *skybox);
 
     void draw_instancing(const resources::Shader *shader, const resources::Instancing *instancing);
+
+    void draw_bloom(const resources::Shader *shader_blur, const resources::Shader *shader_final,
+                    resources::Bloom *bloom, const float exposure);
 
     Camera *camera() { return &m_camera; }
 

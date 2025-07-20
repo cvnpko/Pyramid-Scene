@@ -7,6 +7,7 @@
 #include <engine/graphics/GraphicsController.hpp>
 #include <engine/graphics/OpenGL.hpp>
 #include <engine/platform/PlatformController.hpp>
+#include <engine/resources/Bloom.hpp>
 #include <engine/resources/Skybox.hpp>
 
 namespace engine::graphics {
@@ -114,6 +115,57 @@ void GraphicsController::draw_instancing(const resources::Shader *shader, const 
         shader->set_mat4("model", instancing->get_model_matrix(i));
         model->draw(shader);
     }
+}
+
+void render_quad(resources::Bloom *bloom) {
+    uint32_t quadVAO = bloom->get_quadVAO(), quadVBO = 0;
+    if (quadVAO == 0) {
+        float quadVertices[] = {
+                // positions        // texture Coords
+                -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+                -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+                1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+                1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        };
+        // setup plane VAO
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *) 0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *) (3 * sizeof(float)));
+        bloom->set_quadVAO(quadVAO);
+    }
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
+}
+
+void GraphicsController::draw_bloom(const resources::Shader *shader_blur, const resources::Shader *shader_final, resources::Bloom *bloom, float exposure) {
+    bool horizontal = true, first_iteration = true;
+    unsigned int amount = 10;
+    shader_blur->use();
+    for (unsigned int i = 0; i < amount; i++) {
+        bloom->activate_pingpong_FBO(horizontal);
+        shader_blur->set_int("horizontal", horizontal);
+        CHECKED_GL_CALL(glBindTexture, GL_TEXTURE_2D, first_iteration ? bloom->get_colorbuffer(1) : bloom->get_pingpong_colorbuffers(!horizontal));
+        render_quad(bloom);
+        horizontal = !horizontal;
+        if (first_iteration) first_iteration = false;
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    CHECKED_GL_CALL(glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    shader_final->use();
+    CHECKED_GL_CALL(glActiveTexture, GL_TEXTURE0);
+    CHECKED_GL_CALL(glBindTexture, GL_TEXTURE_2D, bloom->get_colorbuffer(0));
+    CHECKED_GL_CALL(glActiveTexture, GL_TEXTURE1);
+    CHECKED_GL_CALL(glBindTexture, GL_TEXTURE_2D, bloom->get_pingpong_colorbuffers(!horizontal));
+    shader_final->set_float("exposure", exposure);
+    render_quad(bloom);
 }
 
 }

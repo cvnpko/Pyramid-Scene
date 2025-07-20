@@ -12,6 +12,23 @@ void MainController::initialize() {
     auto graphics = engine::graphics::GraphicsController::get<engine::graphics::GraphicsController>();
     engine::graphics::PerspectiveMatrixParams &perspective_matrix = graphics->perspective_params();
     perspective_matrix.Far = 500.0f;
+
+    auto shader = engine::core::Controller::get<engine::resources::ResourcesController>()->shader("basic");
+    shader->use();
+    shader->set_int("diffuseTexture", 0);
+
+    auto shader_instancing = engine::core::Controller::get<engine::resources::ResourcesController>()->shader("instancing");
+    shader_instancing->use();
+    shader_instancing->set_int("diffuseTexture", 0);
+
+    auto shader_blur = engine::core::Controller::get<engine::resources::ResourcesController>()->shader("bloom_blur");
+    shader_blur->use();
+    shader_blur->set_int("image", 0);
+
+    auto shader_bloom_final = engine::core::Controller::get<engine::resources::ResourcesController>()->shader("bloom_final");
+    shader_bloom_final->use();
+    shader_bloom_final->set_int("scene", 0);
+    shader_bloom_final->set_int("bloomBlur", 1);
 }
 
 bool MainController::loop() {
@@ -28,7 +45,11 @@ void MainController::poll_events() {
 
 void MainController::update() { update_camera(); }
 
-void MainController::begin_draw() { engine::graphics::OpenGL::clear_buffers(); }
+void MainController::begin_draw() {
+    auto bloom = engine::core::Controller::get<engine::resources::ResourcesController>()->bloom();
+    bloom->activate_hdrFBO();
+    engine::graphics::OpenGL::clear_buffers();
+}
 
 void MainController::draw() {
     draw_dunes();
@@ -37,6 +58,7 @@ void MainController::draw() {
     draw_camels();
     draw_instancing();
     draw_skybox();
+    draw_bloom();
 }
 
 void MainController::end_draw() { engine::core::Controller::get<engine::platform::PlatformController>()->swap_buffers(); }
@@ -150,6 +172,14 @@ void MainController::draw_instancing() {
     shader->use();
     light_controller->setLight(shader);
     engine::core::Controller::get<engine::graphics::GraphicsController>()->draw_instancing(shader, instancing_model);
+}
+
+void MainController::draw_bloom() {
+    auto shader_blur = engine::core::Controller::get<engine::resources::ResourcesController>()->shader("bloom_blur");
+    auto shader_final = engine::core::Controller::get<engine::resources::ResourcesController>()->shader("bloom_final");
+    auto main_event_controller = engine::core::Controller::get<app::MainEventController>();
+    auto bloom = engine::core::Controller::get<engine::resources::ResourcesController>()->bloom();
+    engine::core::Controller::get<engine::graphics::GraphicsController>()->draw_bloom(shader_blur, shader_final, bloom, main_event_controller->is_day() ? 2.0f : 0.3f);
 }
 
 void MainController::update_camera() {
