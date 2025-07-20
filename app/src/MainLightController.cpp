@@ -74,11 +74,12 @@ void MainLightController::begin_draw() {}
 void MainLightController::draw() {
     draw_moon();
     draw_sun();
+    draw_pyramid();
 }
 
 void MainLightController::draw_moon() {
     auto graphics = engine::core::Controller::get<engine::graphics::GraphicsController>();
-    auto shader = engine::core::Controller::get<engine::resources::ResourcesController>()->shader("sun_moon_shader");
+    auto shader = engine::core::Controller::get<engine::resources::ResourcesController>()->shader("light_shader");
     auto main_event_controller = engine::core::Controller::get<app::MainEventController>();
     auto moon = engine::core::Controller::get<engine::resources::ResourcesController>()->model("moon");
     shader->use();
@@ -97,7 +98,7 @@ void MainLightController::draw_moon() {
 
 void MainLightController::draw_sun() {
     auto graphics = engine::core::Controller::get<engine::graphics::GraphicsController>();
-    auto shader = engine::core::Controller::get<engine::resources::ResourcesController>()->shader("sun_moon_shader");
+    auto shader = engine::core::Controller::get<engine::resources::ResourcesController>()->shader("light_shader");
     auto sun = engine::core::Controller::get<engine::resources::ResourcesController>()->model("sun");
     shader->use();
     shader->set_mat4("projection", graphics->projection_matrix());
@@ -110,6 +111,22 @@ void MainLightController::draw_sun() {
     shader->set_vec3("light", m_sun_light);
     shader->set_float("light_coeff", m_sun_light_coeff);
     sun->draw(shader);
+}
+
+void MainLightController::draw_pyramid() {
+    auto graphics = engine::core::Controller::get<engine::graphics::GraphicsController>();
+    auto shader = engine::core::Controller::get<engine::resources::ResourcesController>()->shader("light_shader");
+    auto pyramid = engine::core::Controller::get<engine::resources::ResourcesController>()->model("pyramid");
+    shader->use();
+    shader->set_mat4("projection", graphics->projection_matrix());
+    shader->set_mat4("view", graphics->camera()->view_matrix());
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(50.00f, 23.8f, 0.0f));
+    model = glm::scale(model, glm::vec3(50.0f));
+    shader->set_mat4("model", model);
+    shader->set_vec3("light", m_pyramid_light);
+    shader->set_float("light_coeff", m_pyramid_light_coeff);
+    pyramid->draw(shader);
 }
 
 void MainLightController::end_draw() {}

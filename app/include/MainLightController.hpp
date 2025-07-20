@@ -37,6 +37,8 @@ private:
 
     void draw_sun();
 
+    void draw_pyramid();
+
     void end_draw() override;
 
     bool m_spotlight_enabled{false};
@@ -46,6 +48,9 @@ private:
 
     glm::vec3 m_moon_light{glm::vec3(247.0f, 234.0f, 198.0f) / 255.0f};
     float m_moon_light_coeff{0.1f};
+
+    glm::vec3 m_pyramid_light{glm::vec3(247.0f, 234.0f, 198.0f) / 255.0f};
+    float m_pyramid_light_coeff{1.0f};
 
     float m_ambient_coeff{0.1f};
     float angle{0.0f};
@@ -60,7 +65,7 @@ private:
         float linear;
         float quadratic;
 
-    } m_point_light_sun, m_point_light_moon;
+    } m_point_light_sun, m_point_light_moon, m_point_light_pyramid;
 };
 
 }
