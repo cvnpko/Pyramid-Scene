@@ -8,6 +8,7 @@ A 3D scene inspired by the Giza Plateau.
 F1 -> TURN ON/OFF CURSOR  
 F2 -> SWITCH DAY AND NIGHT  
 F -> TURN ON/OFF SPOTLIGHT
+SPACE -> TURN ON/OFF BLOOM
 
 ## Features
 
@@ -27,7 +28,7 @@ CHANGE_SKYBOX
 
 ### Group B:
 
-[ ] Bloom with the use of HDR  
+[x] Bloom with the use of HDR  
 [ ] Deferred Shading  
 [ ] Point Shadows  
 [ ] SSAO
