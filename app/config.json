@@ -32,7 +32,7 @@
     },
     "instancing": {
       "bird": {
-        "amount": 1000
+        "amount": 3000
       }
     }
   },

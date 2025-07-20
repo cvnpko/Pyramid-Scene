@@ -196,7 +196,7 @@ Instancing *ResourcesController::instancing(const std::string &name) {
         std::vector<glm::mat4> model_matrices(amount);
         srand(static_cast<unsigned int>(platform->current()));
         for (unsigned int i = 0; i < (amount - 1) / 50; i++) {
-            float z_start = -120.0f, x_start = -5.0f * i + 30.0f, y_start = 50.0f;
+            float z_start = -120.0f, x_start = -5.0f * i + 200.0f, y_start = 50.0f;
             for (int j = 0; j < 50; j++) {
                 glm::mat4 model = glm::mat4(1.0f);
                 float displacement = (rand() % 400) / 100.0f - 2.0f;
@@ -214,7 +214,7 @@ Instancing *ResourcesController::instancing(const std::string &name) {
                 model_matrices[i * 50 + j] = model;
             }
         }
-        float z_start = -120.0f, x_start = -5.0f * ((amount - 1) / 50) + 30.0f, y_start = 50.0f;
+        float z_start = -120.0f, x_start = -5.0f * ((amount - 1) / 50) + 200.0f, y_start = 50.0f;
         for (int j = ((amount - 1) / 50) * 50; j < amount; j++) {
             glm::mat4 model = glm::mat4(1.0f);
             float displacement = (rand() % 400) / 100.0f - 2.0f;
@@ -223,10 +223,10 @@ Instancing *ResourcesController::instancing(const std::string &name) {
             float y = y_start + displacement * 0.4f;
             displacement = (rand() % 400) / 100.0f - 2.0f;
             float z = z_start + displacement;
-            z_start += 3.0f;
+            z_start += 5.0f;
             model = glm::translate(model, glm::vec3(x, y, z));
 
-            float scale = static_cast<float>((rand() % 20) / 30.00 + 0.1);
+            float scale = static_cast<float>((rand() % 20) / 10.00 + 1.0);
             model = glm::scale(model, glm::vec3(scale));
 
             model_matrices[j] = model;
