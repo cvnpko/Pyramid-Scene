@@ -196,7 +196,7 @@ Instancing *ResourcesController::instancing(const std::string &name) {
         std::vector<glm::mat4> model_matrices(amount);
         srand(static_cast<unsigned int>(platform->current()));
         for (unsigned int i = 0; i < (amount - 1) / 50; i++) {
-            float z_start = -50.0f, x_start = -5.0f * i + 30.0f, y_start = 50.0f;
+            float z_start = -120.0f, x_start = -5.0f * i + 30.0f, y_start = 50.0f;
             for (int j = 0; j < 50; j++) {
                 glm::mat4 model = glm::mat4(1.0f);
                 float displacement = (rand() % 400) / 100.0f - 2.0f;
@@ -214,7 +214,7 @@ Instancing *ResourcesController::instancing(const std::string &name) {
                 model_matrices[i * 50 + j] = model;
             }
         }
-        float z_start = -50.0f, x_start = -5.0f * ((amount - 1) / 50) + 30.0f, y_start = 50.0f;
+        float z_start = -120.0f, x_start = -5.0f * ((amount - 1) / 50) + 30.0f, y_start = 50.0f;
         for (int j = ((amount - 1) / 50) * 50; j < amount; j++) {
             glm::mat4 model = glm::mat4(1.0f);
             float displacement = (rand() % 400) / 100.0f - 2.0f;
