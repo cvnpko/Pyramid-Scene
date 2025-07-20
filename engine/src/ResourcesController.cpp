@@ -195,26 +195,41 @@ Instancing *ResourcesController::instancing(const std::string &name) {
         std::string model_name = name;
         std::vector<glm::mat4> model_matrices(amount);
         srand(static_cast<unsigned int>(platform->current()));
-        float radius = 150.0;
-        float offset = 25.0f;
-        for (unsigned int i = 0; i < amount; i++) {
+        for (unsigned int i = 0; i < (amount - 1) / 10; i++) {
+            float z_start = -50.0f, x_start = -5.0f * i + 30.0f, y_start = 50.0f;
+            for (int j = 0; j < 10; j++) {
+                glm::mat4 model = glm::mat4(1.0f);
+                float displacement = (rand() % 400) / 100.0f - 2.0f;
+                float x = x_start + displacement;
+                displacement = (rand() % 400) / 100.0f - 2.0f;
+                float y = y_start + displacement * 0.4f;
+                displacement = (rand() % 400) / 100.0f - 2.0f;
+                float z = z_start + displacement;
+                z_start += 5.0f;
+                model = glm::translate(model, glm::vec3(x, y, z));
+
+                float scale = static_cast<float>((rand() % 20) / 20.00 + 0.1);
+                model = glm::scale(model, glm::vec3(scale));
+
+                model_matrices[i * 10 + j] = model;
+            }
+        }
+        float z_start = -50.0f, x_start = -5.0f * ((amount - 1) / 10) + 30.0f, y_start = 50.0f;
+        for (int j = ((amount - 1) / 10) * 10; j < amount; j++) {
             glm::mat4 model = glm::mat4(1.0f);
-            float angle = (float) i / (float) amount * 360.0f;
-            float displacement = (rand() % (int) (2 * offset)) / 100.0f - offset;
-            float x = sin(angle) * radius + displacement;
-            displacement = (rand() % (int) (2 * offset * 100)) / 100.0f - offset;
-            float y = displacement * 0.4f;
-            displacement = (rand() % (int) (2 * offset * 100)) / 100.0f - offset;
-            float z = cos(angle) * radius + displacement;
+            float displacement = (rand() % 400) / 100.0f - 2.0f;
+            float x = x_start + displacement;
+            displacement = (rand() % 400) / 100.0f - 2.0f;
+            float y = y_start + displacement * 0.4f;
+            displacement = (rand() % 400) / 100.0f - 2.0f;
+            float z = z_start + displacement;
+            z_start += 3.0f;
             model = glm::translate(model, glm::vec3(x, y, z));
 
-            float scale = static_cast<float>((rand() % 20) / 10.00 + 0.05);
+            float scale = static_cast<float>((rand() % 20) / 30.00 + 0.1);
             model = glm::scale(model, glm::vec3(scale));
 
-            float rotAngle = static_cast<float>((rand() % 360));
-            model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
-
-            model_matrices[i] = model;
+            model_matrices[j] = model;
         }
 
         unsigned int buffer;

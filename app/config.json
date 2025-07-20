@@ -25,14 +25,14 @@
         "path": "camel/camel.obj",
         "flip_uvs": false
       },
-      "locust": {
-        "path": "locust/locust.obj",
+      "bird": {
+        "path": "bird/bird.obj",
         "flip_uvs": false
       }
     },
     "instancing": {
-      "locust": {
-        "amount": 10
+      "bird": {
+        "amount": 40
       }
     }
   },

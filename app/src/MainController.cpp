@@ -146,7 +146,7 @@ void MainController::draw_skybox() {
 void MainController::draw_instancing() {
     auto shader = engine::core::Controller::get<engine::resources::ResourcesController>()->shader("instancing");
     auto light_controller = engine::core::Controller::get<app::MainLightController>();
-    auto instancing_model = engine::core::Controller::get<engine::resources::ResourcesController>()->instancing("locust");
+    auto instancing_model = engine::core::Controller::get<engine::resources::ResourcesController>()->instancing("bird");
     shader->use();
     light_controller->setLight(shader);
     engine::core::Controller::get<engine::graphics::GraphicsController>()->draw_instancing(shader, instancing_model);
