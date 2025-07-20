@@ -19,6 +19,8 @@ public:
 private:
     void initialize() override;
 
+    void setLight(engine::resources::Shader *shader);
+
     bool loop() override;
 
     void poll_events() override;
@@ -41,6 +43,12 @@ private:
 
     void draw_bloom();
 
+    void draw_moon();
+
+    void draw_sun();
+
+    void draw_pyramid();
+
     void draw() override;
 
     void end_draw() override;
@@ -48,6 +56,32 @@ private:
     void update_camera();
 
     bool m_cursor_enabled{true};
+    bool m_bloom{true};
+    bool m_spotlight_enabled{false};
+
+    glm::vec3 m_sun_light{glm::vec3(255.0f, 255.0f, 224.0f) / 255.0f};
+    float m_sun_light_coeff{0.7f};
+
+    glm::vec3 m_moon_light{glm::vec3(247.0f, 234.0f, 198.0f) / 255.0f};
+    float m_moon_light_coeff{0.1f};
+
+    glm::vec3 m_pyramid_light{glm::vec3(247.0f, 234.0f, 198.0f) / 255.0f};
+    float m_pyramid_light_coeff{1.0f};
+
+    float m_ambient_coeff{0.01f};
+    float angle{0.0f};
+
+    struct PointLight {
+        glm::vec3 position;
+        glm::vec3 ambient;
+        glm::vec3 diffuse;
+        glm::vec3 specular;
+
+        float constant;
+        float linear;
+        float quadratic;
+
+    } m_point_light_sun, m_point_light_moon, m_point_light_pyramid;
 
 };
 

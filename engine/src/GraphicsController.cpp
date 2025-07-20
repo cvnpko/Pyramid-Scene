@@ -89,7 +89,7 @@ void GraphicsController::draw_skybox(const resources::Shader *shader, const reso
     CHECKED_GL_CALL(glBindTexture, GL_TEXTURE_CUBE_MAP, skybox->texture());
     CHECKED_GL_CALL(glDrawArrays, GL_TRIANGLES, 0, 36);
     CHECKED_GL_CALL(glBindVertexArray, 0);
-    CHECKED_GL_CALL(glDepthFunc, GL_LESS);// set depth function back to default
+    CHECKED_GL_CALL(glDepthFunc, GL_LESS);
     CHECKED_GL_CALL(glBindTexture, GL_TEXTURE_CUBE_MAP, 0);
 }
 
@@ -121,13 +121,11 @@ void render_quad(resources::Bloom *bloom) {
     uint32_t quadVAO = bloom->get_quadVAO(), quadVBO = 0;
     if (quadVAO == 0) {
         float quadVertices[] = {
-                // positions        // texture Coords
                 -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
                 -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
                 1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
                 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
         };
-        // setup plane VAO
         glGenVertexArrays(1, &quadVAO);
         glGenBuffers(1, &quadVBO);
         glBindVertexArray(quadVAO);
@@ -144,9 +142,10 @@ void render_quad(resources::Bloom *bloom) {
     glBindVertexArray(0);
 }
 
-void GraphicsController::draw_bloom(const resources::Shader *shader_blur, const resources::Shader *shader_final, resources::Bloom *bloom, float exposure) {
+void GraphicsController::draw_bloom(const resources::Shader *shader_blur, const resources::Shader *shader_final, resources::Bloom *bloom, float exposure, bool use_bloom) {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     bool horizontal = true, first_iteration = true;
-    unsigned int amount = 5;
+    unsigned int amount = 10;
     shader_blur->use();
     for (unsigned int i = 0; i < amount; i++) {
         bloom->activate_pingpong_FBO(horizontal);
@@ -164,6 +163,7 @@ void GraphicsController::draw_bloom(const resources::Shader *shader_blur, const 
     CHECKED_GL_CALL(glBindTexture, GL_TEXTURE_2D, bloom->get_colorbuffer(0));
     CHECKED_GL_CALL(glActiveTexture, GL_TEXTURE1);
     CHECKED_GL_CALL(glBindTexture, GL_TEXTURE_2D, bloom->get_pingpong_colorbuffers(!horizontal));
+    shader_final->set_bool("bloom", use_bloom);
     shader_final->set_float("exposure", exposure);
     render_quad(bloom);
 }

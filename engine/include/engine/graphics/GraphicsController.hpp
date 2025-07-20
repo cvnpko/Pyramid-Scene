@@ -93,7 +93,7 @@ public:
     void draw_instancing(const resources::Shader *shader, const resources::Instancing *instancing);
 
     void draw_bloom(const resources::Shader *shader_blur, const resources::Shader *shader_final,
-                    resources::Bloom *bloom, const float exposure);
+                    resources::Bloom *bloom, const float exposure, const bool use_bloom);
 
     Camera *camera() { return &m_camera; }
 
