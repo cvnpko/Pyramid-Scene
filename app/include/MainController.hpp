@@ -19,7 +19,7 @@ public:
 private:
     void initialize() override;
 
-    void setLight(engine::resources::Shader *shader);
+    void set_light(engine::resources::Shader *shader);
 
     bool loop() override;
 
@@ -69,7 +69,7 @@ private:
     float m_pyramid_light_coeff{1.0f};
 
     float m_ambient_coeff{0.01f};
-    float angle{0.0f};
+    float m_angle{0.0f};
 
     struct PointLight {
         glm::vec3 position;

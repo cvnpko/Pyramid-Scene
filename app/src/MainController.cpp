@@ -7,11 +7,11 @@
 #include <spdlog/spdlog.h>
 
 namespace app {
-void MainController::setLight(engine::resources::Shader *shader) {
+void MainController::set_light(engine::resources::Shader *shader) {
     auto graphics = get<engine::graphics::GraphicsController>();
 
     shader->use();
-    shader->set_vec3("pointLightSun.position", glm::vec3(glm::rotate(glm::mat4(1.0f), glm::radians(angle),
+    shader->set_vec3("pointLightSun.position", glm::vec3(glm::rotate(glm::mat4(1.0f), glm::radians(m_angle),
                                                                      glm::vec3(1.0f, 0.0f, 0.0f)) * glm::vec4(m_point_light_sun.position, 1.0)));
     shader->set_vec3("pointLightSun.ambient", m_point_light_sun.ambient);
     shader->set_vec3("pointLightSun.diffuse", m_point_light_sun.diffuse);
@@ -20,7 +20,7 @@ void MainController::setLight(engine::resources::Shader *shader) {
     shader->set_float("pointLightSun.linear", m_point_light_sun.linear);
     shader->set_float("pointLightSun.quadratic", m_point_light_sun.quadratic);
 
-    shader->set_vec3("pointLightMoon.position", glm::vec3(glm::rotate(glm::mat4(1.0f), glm::radians(angle),
+    shader->set_vec3("pointLightMoon.position", glm::vec3(glm::rotate(glm::mat4(1.0f), glm::radians(m_angle),
                                                                       glm::vec3(1.0f, 0.0f, 0.0f)) * glm::vec4(m_point_light_moon.position, 1.0)));
     shader->set_vec3("pointLightMoon.ambient", m_point_light_moon.ambient);
     shader->set_vec3("pointLightMoon.diffuse", m_point_light_moon.diffuse);
@@ -110,7 +110,7 @@ bool MainController::loop() {
 void MainController::poll_events() {
     const auto platform = get<engine::platform::PlatformController>();
     auto main_event_controller = get<app::MainEventController>();
-    angle = main_event_controller->get_event_angle();
+    m_angle = main_event_controller->get_event_angle();
     if (platform->key(engine::platform::KEY_F1).state() == engine::platform::Key::State::JustPressed) { platform->set_enable_cursor(m_cursor_enabled = !m_cursor_enabled); }
     if (platform->key(engine::platform::KeyId::KEY_SPACE).state() == engine::platform::Key::State::JustPressed) { m_bloom = !m_bloom; }
     if (platform->key(engine::platform::KEY_F).state() == engine::platform::Key::State::JustPressed) { m_spotlight_enabled = !m_spotlight_enabled; }
@@ -122,7 +122,7 @@ void MainController::begin_draw() { engine::graphics::OpenGL::clear_buffers(); }
 
 void MainController::draw() {
     auto bloom = get<engine::resources::ResourcesController>()->bloom();
-    bloom->activate_hdrFBO();
+    bloom->activate_hdr_fbo();
     engine::graphics::OpenGL::clear_buffers();
     draw_dunes();
     draw_pyramids();
@@ -144,7 +144,7 @@ void MainController::draw_dunes() {
     auto dunes = get<engine::resources::ResourcesController>()->model("dunes");
     shader->use();
 
-    setLight(shader);
+    set_light(shader);
 
     shader->set_mat4("projection", graphics->projection_matrix());
     shader->set_mat4("view", graphics->camera()
@@ -162,7 +162,7 @@ void MainController::draw_pyramids() {
     auto pyramid = get<engine::resources::ResourcesController>()->model("pyramid");
     shader->use();
 
-    setLight(shader);
+    set_light(shader);
 
     shader->set_mat4("projection", graphics->projection_matrix());
     shader->set_mat4("view", graphics->camera()->view_matrix());
@@ -192,7 +192,7 @@ void MainController::draw_sphinx() {
     auto sphinx = get<engine::resources::ResourcesController>()->model("sphinx");
     shader->use();
 
-    setLight(shader);
+    set_light(shader);
 
     shader->set_mat4("projection", graphics->projection_matrix());
     shader->set_mat4("view", graphics->camera()
@@ -211,7 +211,7 @@ void MainController::draw_camels() {
     auto camel = get<engine::resources::ResourcesController>()->model("camel");
     shader->use();
 
-    setLight(shader);
+    set_light(shader);
 
     shader->set_mat4("projection", graphics->projection_matrix());
     shader->set_mat4("view", graphics->camera()->view_matrix());
@@ -240,7 +240,7 @@ void MainController::draw_instancing() {
     auto shader = get<engine::resources::ResourcesController>()->shader("instancing");
     auto instancing_model = get<engine::resources::ResourcesController>()->instancing("bird");
     shader->use();
-    setLight(shader);
+    set_light(shader);
     get<engine::graphics::GraphicsController>()->draw_instancing(shader, instancing_model);
 }
 
@@ -262,7 +262,7 @@ void MainController::draw_moon() {
     shader->set_mat4("view", graphics->camera()
                                      ->view_matrix());
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(m_angle), glm::vec3(1.0f, 0.0f, 0.0f));
     model = glm::translate(model, glm::vec3(0.0f, -300.0f, 0.0f));
     model = glm::scale(model, glm::vec3(15.0f));
     shader->set_mat4("model", model);
@@ -279,7 +279,7 @@ void MainController::draw_sun() {
     shader->set_mat4("projection", graphics->projection_matrix());
     shader->set_mat4("view", graphics->camera()->view_matrix());
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(m_angle), glm::vec3(1.0f, 0.0f, 0.0f));
     model = glm::translate(model, glm::vec3(0.0f, 300.0f, 0.0f));
     model = glm::scale(model, glm::vec3(15.0f));
     shader->set_mat4("model", model);

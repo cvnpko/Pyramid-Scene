@@ -15,7 +15,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include<engine/graphics/OpenGL.hpp>
-#include <glad/glad.h>
 
 namespace engine::resources {
 
@@ -236,29 +235,13 @@ Instancing *ResourcesController::instancing(const std::string &name) {
         }
 
         unsigned int buffer;
-        CHECKED_GL_CALL(glGenBuffers, 1, &buffer);
-        CHECKED_GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, buffer);
-        CHECKED_GL_CALL(glBufferData, GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &model_matrices[0], GL_STATIC_DRAW);
+
+        graphics::OpenGL::instancing_buffer(buffer, amount, model_matrices[0]);
 
         unsigned int size_meshes = m_models[model_name]->meshes().size();
         for (unsigned int i = 0; i < size_meshes; i++) {
             unsigned int VAO = m_models[model_name]->meshes()[i].m_vao;
-            CHECKED_GL_CALL(glBindVertexArray, VAO);
-            CHECKED_GL_CALL(glEnableVertexAttribArray, 3);
-            CHECKED_GL_CALL(glVertexAttribPointer, 3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *) 0);
-            CHECKED_GL_CALL(glEnableVertexAttribArray, 4);
-            CHECKED_GL_CALL(glVertexAttribPointer, 4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *) (sizeof(glm::vec4)));
-            CHECKED_GL_CALL(glEnableVertexAttribArray, 5);
-            CHECKED_GL_CALL(glVertexAttribPointer, 5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *) (2 * sizeof(glm::vec4)));
-            CHECKED_GL_CALL(glEnableVertexAttribArray, 6);
-            CHECKED_GL_CALL(glVertexAttribPointer, 6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *) (3 * sizeof(glm::vec4)));
-
-            CHECKED_GL_CALL(glVertexAttribDivisor, 3, 1);
-            CHECKED_GL_CALL(glVertexAttribDivisor, 4, 1);
-            CHECKED_GL_CALL(glVertexAttribDivisor, 5, 1);
-            CHECKED_GL_CALL(glVertexAttribDivisor, 6, 1);
-
-            CHECKED_GL_CALL(glBindVertexArray, 0);
+            graphics::OpenGL::instancing_model(VAO);
         }
 
         spdlog::info("load_instancing(name={})", name);
@@ -281,46 +264,14 @@ Bloom *ResourcesController::bloom() {
     if (!result) {
         auto platform = engine::core::Controller::get<engine::platform::PlatformController>();
         unsigned int hdrFBO;
-        CHECKED_GL_CALL(glGenFramebuffers, 1, &hdrFBO);
-        CHECKED_GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, hdrFBO);
-
         unsigned int colorBuffers[2];
-        CHECKED_GL_CALL(glGenTextures, 2, colorBuffers);
-        for (unsigned int i = 0; i < 2; i++) {
-            CHECKED_GL_CALL(glBindTexture, GL_TEXTURE_2D, colorBuffers[i]);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, platform->window()->width(), platform->window()->height(), 0, GL_RGBA, GL_FLOAT, NULL);
-            CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            CHECKED_GL_CALL(glFramebufferTexture2D, GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, colorBuffers[i], 0);
-        }
+        int width = platform->window()->width(), height = platform->window()->height();
         unsigned int rboDepth;
-        CHECKED_GL_CALL(glGenRenderbuffers, 1, &rboDepth);
-        CHECKED_GL_CALL(glBindRenderbuffer, GL_RENDERBUFFER, rboDepth);
-        CHECKED_GL_CALL(glRenderbufferStorage, GL_RENDERBUFFER, GL_DEPTH_COMPONENT, platform->window()->width(), platform->window()->height());
-        CHECKED_GL_CALL(glFramebufferRenderbuffer, GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
-
-        unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-        glDrawBuffers(2, attachments);
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) { spdlog::info("Framebuffer not complete!"); }
-        CHECKED_GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, 0);
 
         unsigned int pingpongFBO[2];
         unsigned int pingpongColorbuffers[2];
-        CHECKED_GL_CALL(glGenFramebuffers, 2, pingpongFBO);
-        CHECKED_GL_CALL(glGenTextures, 2, pingpongColorbuffers);
-        for (unsigned int i = 0; i < 2; i++) {
-            CHECKED_GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, pingpongFBO[i]);
-            CHECKED_GL_CALL(glBindTexture, GL_TEXTURE_2D, pingpongColorbuffers[i]);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, platform->window()->width(), platform->window()->height(), 0, GL_RGBA, GL_FLOAT, NULL);
-            CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            CHECKED_GL_CALL(glFramebufferTexture2D, GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongColorbuffers[i], 0);
-            if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) { spdlog::info("Framebuffer not complete!"); }
-        }
+
+        graphics::OpenGL::bloom_init(hdrFBO, colorBuffers, width, height, rboDepth, pingpongFBO, pingpongColorbuffers);
 
         spdlog::info("load_bloom");
         result = std::make_unique<Bloom>(Bloom(pingpongFBO, pingpongColorbuffers, colorBuffers, hdrFBO, rboDepth));

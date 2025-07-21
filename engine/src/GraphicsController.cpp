@@ -118,7 +118,7 @@ void GraphicsController::draw_instancing(const resources::Shader *shader, const 
 }
 
 void render_quad(resources::Bloom *bloom) {
-    uint32_t quadVAO = bloom->get_quadVAO(), quadVBO = 0;
+    uint32_t quadVAO = bloom->get_quad_vao(), quadVBO = 0;
     if (quadVAO == 0) {
         float quadVertices[] = {
                 -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
@@ -135,7 +135,7 @@ void render_quad(resources::Bloom *bloom) {
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *) 0);
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *) (3 * sizeof(float)));
-        bloom->set_quadVAO(quadVAO);
+        bloom->set_quad_vao(quadVAO);
     }
     glBindVertexArray(quadVAO);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -148,7 +148,7 @@ void GraphicsController::draw_bloom(const resources::Shader *shader_blur, const 
     unsigned int amount = 10;
     shader_blur->use();
     for (unsigned int i = 0; i < amount; i++) {
-        bloom->activate_pingpong_FBO(horizontal);
+        bloom->activate_pingpong_fbo(horizontal);
         shader_blur->set_int("horizontal", horizontal);
         CHECKED_GL_CALL(glBindTexture, GL_TEXTURE_2D, first_iteration ? bloom->get_colorbuffer(1) : bloom->get_pingpong_colorbuffers(!horizontal));
         render_quad(bloom);

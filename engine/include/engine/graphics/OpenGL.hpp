@@ -134,6 +134,18 @@ public:
     */
     static void clear_buffers();
 
+    static void bind_frame_buffer(uint32_t fbo);
+
+    static void bloom_observer_color_buffer(uint32_t color_buffer, int width, int height, int i);
+
+    static void bloom_observer_render_buffer(uint32_t render_buffer, int width, int height);
+
+    static void bloom_init(unsigned int &hdr_fbo, unsigned int color_buffers[2], int width, int height, unsigned int &rbo_depth, unsigned int pingpong_fbo[2], unsigned int pingpong_colorbuffers[2]);
+
+    static void instancing_buffer(unsigned int &buffer, uint32_t amount, glm::mat4 &model_matrices);
+
+    static void instancing_model(unsigned int vao);
+
     /**
     * @brief Retrieve the shader compilation error log message.
     * @param shader_id Shader id for which the compilation failed.
