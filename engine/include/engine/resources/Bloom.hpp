@@ -7,7 +7,6 @@
 
 #include <memory>
 #include <engine/core/Controller.hpp>
-#include <engine/platform/BloomObserver.hpp>
 #include <engine/platform/PlatformController.hpp>
 
 namespace engine::resources {
@@ -44,9 +43,6 @@ private:
     : m_hdr_fbo(hdr_fbo)
   , m_quad_vao(0)
   , m_rbo_depth(rbo_depth) {
-        auto observer = std::make_unique<platform::BloomObserver>();
-        engine::core::Controller::get<engine::platform::PlatformController>()->register_platform_event_observer(
-                std::move(observer));
         for (int i = 0; i < 2; i++) {
             m_pingpong_fbo[i] = pingpong_fbo[i];
             m_pingpong_colorbuffers[i] = pingpong_colorbuffers[i];

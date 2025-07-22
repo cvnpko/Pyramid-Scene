@@ -5,7 +5,6 @@ A 3D scene inspired by the Giza Plateau.
 
 ## Controls
 
-F1 -> TURN ON/OFF CURSOR  
 F2 -> SWITCH DAY AND NIGHT  
 F -> TURN ON/OFF SPOTLIGHT
 SPACE -> TURN ON/OFF BLOOM

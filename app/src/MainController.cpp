@@ -51,6 +51,9 @@ void MainController::set_light(engine::resources::Shader *shader) {
 
 void MainController::initialize() {
     engine::graphics::OpenGL::enable_depth_testing();
+    const auto platform = get<engine::platform::PlatformController>();
+
+    platform->set_enable_cursor(false);
     auto graphics = engine::graphics::GraphicsController::get<engine::graphics::GraphicsController>();
     engine::graphics::PerspectiveMatrixParams &perspective_matrix = graphics->perspective_params();
     perspective_matrix.Far = 500.0f;
@@ -111,7 +114,6 @@ void MainController::poll_events() {
     const auto platform = get<engine::platform::PlatformController>();
     auto main_event_controller = get<app::MainEventController>();
     m_angle = main_event_controller->get_event_angle();
-    if (platform->key(engine::platform::KEY_F1).state() == engine::platform::Key::State::JustPressed) { platform->set_enable_cursor(m_cursor_enabled = !m_cursor_enabled); }
     if (platform->key(engine::platform::KeyId::KEY_SPACE).state() == engine::platform::Key::State::JustPressed) { m_bloom = !m_bloom; }
     if (platform->key(engine::platform::KEY_F).state() == engine::platform::Key::State::JustPressed) { m_spotlight_enabled = !m_spotlight_enabled; }
 }
