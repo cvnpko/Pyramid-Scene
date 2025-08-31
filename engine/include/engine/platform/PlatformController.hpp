@@ -67,9 +67,7 @@ public:
     * @brief Get the window
     * @returns @ref Window
     */
-    const Window *window() const {
-        return &m_window;
-    }
+    const Window *window() const { return &m_window; }
 
     /**
     * @brief Register a @ref PlatformEventObserver callback for platform events.
@@ -81,18 +79,15 @@ public:
     * @brief Get @ref FrameTime for the previous frame. Updated in during @ref core::App::loop
     * @returns @ref FrameTime
     */
-    const FrameTime &frame_time() const {
-        return m_frame_time;
-    }
+    const FrameTime &frame_time() const { return m_frame_time; }
 
     /**
     * @brief Get elapsed time for the previous frame.
     *
     */
-    float dt() const {
-        return m_frame_time.dt;
-    }
+    float dt() const { return m_frame_time.dt; }
 
+    float current() const { return m_frame_time.current; }
     /**
     *  @brief Enables/disabled the visibility of the cursor on screen.
     */
@@ -156,6 +151,6 @@ private:
     std::vector<Key> m_keys;
     std::vector<std::unique_ptr<PlatformEventObserver> > m_platform_event_observers;
 };
-} // namespace engine
+}// namespace engine
 
 #endif//MATF_RG_PROJECT_PLATFORM_H

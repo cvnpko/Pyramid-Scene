@@ -32,7 +32,6 @@ class Mesh {
     friend class AssimpSceneProcessor;
 
 public:
-
     /**
     * @brief Draws the mesh using a given shader. Called by the @ref Model::draw function to draw all the meshes in the model.
     * @param shader The shader to use for drawing.
@@ -44,6 +43,10 @@ public:
     */
     void destroy();
 
+    uint32_t m_vao{0};
+    uint32_t m_num_indices{0};
+    std::vector<Texture *> m_textures;
+
 private:
     /**
     * @brief Constructs a Mesh object.
@@ -54,10 +57,7 @@ private:
     Mesh(const std::vector<Vertex> &vertices, const std::vector<uint32_t> &indices,
          std::vector<Texture *> textures);
 
-    uint32_t m_vao{0};
-    uint32_t m_num_indices{0};
-    std::vector<Texture *> m_textures;
 };
-} // namespace engine
+}// namespace engine
 
 #endif//MATF_RG_PROJECT_MESH_HPP

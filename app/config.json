@@ -1,11 +1,44 @@
 {
   "resources": {
     "models": {
+      "moon": {
+        "path": "moon/moon.obj",
+        "flip_uvs": false
+      },
+      "sun": {
+        "path": "sun/sun.obj",
+        "flip_uvs": false
+      },
+      "dunes": {
+        "path": "dunes/dunes.obj",
+        "flip_uvs": false
+      },
+      "sphinx": {
+        "path": "sphinx/sphinx.obj",
+        "flip_uvs": false
+      },
+      "pyramid": {
+        "path": "pyramids/pyramid.obj",
+        "flip_uvs": false
+      },
+      "camel": {
+        "path": "camel/camel.obj",
+        "flip_uvs": false
+      },
+      "bird": {
+        "path": "bird/bird.obj",
+        "flip_uvs": false
+      }
+    },
+    "instancing": {
+      "bird": {
+        "amount": 3000
+      }
     }
   },
   "window": {
     "height": 600,
-    "title": "Hello, window!",
+    "title": "Pyramid Scene",
     "width": 800
   }
 }

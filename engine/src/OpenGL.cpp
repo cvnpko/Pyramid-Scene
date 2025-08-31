@@ -26,9 +26,7 @@ uint32_t OpenGL::generate_texture(const std::filesystem::path &path, bool flip_u
     int32_t width, height, nr_components;
     stbi_set_flip_vertically_on_load(flip_uvs);
     uint8_t *data = stbi_load(path.c_str(), &width, &height, &nr_components, 0);
-    defer {
-        stbi_image_free(data);
-    };
+    defer { stbi_image_free(data); };
     if (data) {
         int32_t format = texture_format(nr_components);
 
@@ -58,13 +56,11 @@ int32_t OpenGL::texture_format(int32_t number_of_channels) {
 
 uint32_t OpenGL::init_skybox_cube() {
     static unsigned int skybox_vao = 0;
-    if (skybox_vao != 0) {
-        return skybox_vao;
-    }
+    if (skybox_vao != 0) { return skybox_vao; }
     float vertices[] = {
-            // @formatter:off
+        // @formatter:off
         #include <skybox_vertices.include>
-        // @formatter:on
+            // @formatter:on
     };
     uint32_t skybox_vbo = 0;
     CHECKED_GL_CALL(glGenVertexArrays, 1, &skybox_vao);
@@ -73,7 +69,7 @@ uint32_t OpenGL::init_skybox_cube() {
     CHECKED_GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, skybox_vbo);
     CHECKED_GL_CALL(glBufferData, GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_STATIC_DRAW);
     CHECKED_GL_CALL(glEnableVertexAttribArray, 0);
-    CHECKED_GL_CALL(glVertexAttribPointer, 0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0); // NOLINT
+    CHECKED_GL_CALL(glVertexAttribPointer, 0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);// NOLINT
     return skybox_vao;
 }
 
@@ -100,24 +96,18 @@ std::string OpenGL::get_compilation_error_message(uint32_t shader_id) {
 
 std::string_view gl_call_error_description(GLenum error) {
     switch (error) {
-        case GL_NO_ERROR:
-            return
+        case GL_NO_ERROR: return
                     "GL_NO_ERROR: No error has been recorded. The value of this symbolic constant is guaranteed to be 0. ";
-        case GL_INVALID_ENUM:
-            return
+        case GL_INVALID_ENUM: return
                     "GL_INVALID_ENUM: An unacceptable value is specified for an enumerated argument. The offending command is ignored and has no other side effect than to set the error flag.  ";
-        case GL_INVALID_VALUE:
-            return
+        case GL_INVALID_VALUE: return
                     "GL_INVALID_VALUE: A numeric argument is out of range. The offending command is ignored and has no other side effect than to set the error flag.  ";
-        case GL_INVALID_OPERATION:
-            return
+        case GL_INVALID_OPERATION: return
                     "GL_INVALID_OPERATION: The specified operation is not allowed in the current state. The offending command is ignored and has no other side effect than to set the error flag.  ";
-        case GL_INVALID_FRAMEBUFFER_OPERATION:
-            return
+        case GL_INVALID_FRAMEBUFFER_OPERATION: return
                     "GL_INVALID_FRAMEBUFFER_OPERATION: The framebuffer object is not complete."
                     "The offending command is ignored and has no other side effect than to set the error flag.";
-        case GL_OUT_OF_MEMORY:
-            return
+        case GL_OUT_OF_MEMORY: return
                     "GL_OUT_OF_MEMORY: There is not enough memory left to execute the command. The state of the GL is undefined, except for the state of the error flags, after this error is recorded. . ";
         default: return "No Description";
     }
@@ -145,9 +135,7 @@ uint32_t OpenGL::load_skybox_textures(const std::filesystem::path &path, bool fl
     for (const auto &file: std::filesystem::directory_iterator(path)) {
         stbi_set_flip_vertically_on_load(flip_uvs);
         unsigned char *data = stbi_load(absolute(file).c_str(), &width, &height, &nr_channels, 0);
-        defer {
-            stbi_image_free(data);
-        };
+        defer { stbi_image_free(data); };
         if (data) {
             uint32_t i = face_index(file.path()
                                         .stem()
@@ -170,32 +158,94 @@ uint32_t OpenGL::load_skybox_textures(const std::filesystem::path &path, bool fl
     return texture_id;
 }
 
-void OpenGL::enable_depth_testing() {
-    CHECKED_GL_CALL(glEnable, GL_DEPTH_TEST);
+void OpenGL::enable_depth_testing() { CHECKED_GL_CALL(glEnable, GL_DEPTH_TEST); }
+
+void OpenGL::disable_depth_testing() { CHECKED_GL_CALL(glDisable, GL_DEPTH_TEST); }
+
+void OpenGL::clear_buffers() { CHECKED_GL_CALL(glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); }
+
+void OpenGL::bind_frame_buffer(uint32_t FBO) { CHECKED_GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, FBO); }
+
+void OpenGL::bloom_observer_color_buffer(uint32_t color_buffer, int width, int height, int i) {
+    CHECKED_GL_CALL(glBindTexture, GL_TEXTURE_2D, color_buffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+    CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    CHECKED_GL_CALL(glFramebufferTexture2D, GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, color_buffer, 0);
 }
 
-void OpenGL::disable_depth_testing() {
-    CHECKED_GL_CALL(glDisable, GL_DEPTH_TEST);
+void OpenGL::bloom_observer_render_buffer(uint32_t render_buffer, int width, int height) {
+    CHECKED_GL_CALL(glBindRenderbuffer, GL_RENDERBUFFER, render_buffer);
+    CHECKED_GL_CALL(glRenderbufferStorage, GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+    CHECKED_GL_CALL(glFramebufferRenderbuffer, GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, render_buffer);
 }
 
-void OpenGL::clear_buffers() {
-    CHECKED_GL_CALL(glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+void OpenGL::bloom_init(unsigned int &hdr_fbo, unsigned int color_buffers[2], int width, int height, unsigned int &rbo_depth, unsigned int pingpong_fbo[2], unsigned int pingpong_colorbuffers[2]) {
+    CHECKED_GL_CALL(glGenFramebuffers, 1, &hdr_fbo);
+    CHECKED_GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, hdr_fbo);
+
+    CHECKED_GL_CALL(glGenTextures, 2, color_buffers);
+    for (unsigned int i = 0; i < 2; i++) {
+        CHECKED_GL_CALL(glBindTexture, GL_TEXTURE_2D, color_buffers[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+        CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        CHECKED_GL_CALL(glFramebufferTexture2D, GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, color_buffers[i], 0);
+    }
+    CHECKED_GL_CALL(glGenRenderbuffers, 1, &rbo_depth);
+    CHECKED_GL_CALL(glBindRenderbuffer, GL_RENDERBUFFER, rbo_depth);
+    CHECKED_GL_CALL(glRenderbufferStorage, GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+    CHECKED_GL_CALL(glFramebufferRenderbuffer, GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo_depth);
+
+    unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+    glDrawBuffers(2, attachments);
+    CHECKED_GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, 0);
+
+    CHECKED_GL_CALL(glGenFramebuffers, 2, pingpong_fbo);
+    CHECKED_GL_CALL(glGenTextures, 2, pingpong_colorbuffers);
+    for (unsigned int i = 0; i < 2; i++) {
+        CHECKED_GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, pingpong_fbo[i]);
+        CHECKED_GL_CALL(glBindTexture, GL_TEXTURE_2D, pingpong_colorbuffers[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+        CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        CHECKED_GL_CALL(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        CHECKED_GL_CALL(glFramebufferTexture2D, GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpong_colorbuffers[i], 0);
+    }
+}
+
+void OpenGL::instancing_buffer(unsigned int &buffer, uint32_t amount, glm::mat4 &model_matrices) {
+    CHECKED_GL_CALL(glGenBuffers, 1, &buffer);
+    CHECKED_GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, buffer);
+    CHECKED_GL_CALL(glBufferData, GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &model_matrices, GL_STATIC_DRAW);
+}
+
+void OpenGL::instancing_model(unsigned int vao) {
+    CHECKED_GL_CALL(glBindVertexArray, vao);
+    CHECKED_GL_CALL(glEnableVertexAttribArray, 3);
+    CHECKED_GL_CALL(glVertexAttribPointer, 3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *) 0);
+    CHECKED_GL_CALL(glEnableVertexAttribArray, 4);
+    CHECKED_GL_CALL(glVertexAttribPointer, 4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *) (sizeof(glm::vec4)));
+    CHECKED_GL_CALL(glEnableVertexAttribArray, 5);
+    CHECKED_GL_CALL(glVertexAttribPointer, 5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *) (2 * sizeof(glm::vec4)));
+    CHECKED_GL_CALL(glEnableVertexAttribArray, 6);
+    CHECKED_GL_CALL(glVertexAttribPointer, 6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void *) (3 * sizeof(glm::vec4)));
+
+    CHECKED_GL_CALL(glVertexAttribDivisor, 3, 1);
+    CHECKED_GL_CALL(glVertexAttribDivisor, 4, 1);
+    CHECKED_GL_CALL(glVertexAttribDivisor, 5, 1);
+    CHECKED_GL_CALL(glVertexAttribDivisor, 6, 1);
+
+    CHECKED_GL_CALL(glBindVertexArray, 0);
 }
 
 uint32_t face_index(std::string_view name) {
-    if (name == "right") {
-        return 0;
-    } else if (name == "left") {
-        return 1;
-    } else if (name == "top") {
-        return 2;
-    } else if (name == "bottom") {
-        return 3;
-    } else if (name == "front") {
-        return 4;
-    } else if (name == "back") {
-        return 5;
-    } else {
+    if (name == "right") { return 0; } else if (name == "left") { return 1; } else if (name == "top") { return 2; } else if (name == "bottom") { return 3; } else if (name == "front") { return 4; } else if (name == "back") { return 5; } else {
         RG_SHOULD_NOT_REACH_HERE(
                 "Unknown face name: {}. The cubemap textures should be named: right, left, top, bottom, front, back; by their respective faces in the cubemap. The extension of the image file is ignored.",
                 name);
